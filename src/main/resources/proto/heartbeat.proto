@@ -1,0 +1,13 @@
+syntax ="proto2";
+
+package model;
+
+option java_package = "com.zhang.protobuf.model";
+option java_outer_classname="HeartBeatProto";
+
+message HeartBeat{
+    required string id =1;
+    required string msg =2 [default="hello"];
+    optional string remark =3;
+}
+
