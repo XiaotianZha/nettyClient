@@ -1,23 +1,16 @@
 package com.zhang.http.client;
 
 import com.zhang.http.client.handler.HttpSendMessageHandler;
-import com.zhang.http.client.handler.WritrHandler;
 import com.zhang.http.client.message.HttpRequestFuture;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
-import sun.misc.BASE64Encoder;
 
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 public class HttpClient {
 
@@ -53,16 +46,14 @@ public class HttpClient {
                     }
                 });
         ChannelFuture f = boot.connect().sync();
-        System.out.println("bind" + f);
         HttpRequestFuture requestFuture = handler.sendMessage(msg);
-        f.addListener(new ChannelFutureListener() {
+   /*     f.addListener(new ChannelFutureListener() {
             public void operationComplete(ChannelFuture future) throws Exception {
                 //params future in this method is the same with f
                 System.out.println("complete " + future);
                 System.out.println(future.channel());
-//                    System.out.println(future == f);
             }
-        });
+        });*/
         return requestFuture;
            /* System.out.println("main"+future.channel());
             ChannelFuture closse=future.channel().closeFuture();
@@ -78,10 +69,20 @@ public class HttpClient {
 
     public static void main(String[] args) throws Exception {
         HttpClient client = getClient("localhost", 8080);
-        HttpRequestFuture future = client.send("request message", "localhost:8080/testClient");
-        FullHttpResponse f = future.get();
-        System.out.println(f.content().toString(CharsetUtil.UTF_8));
-        client.stop();
+        try {
+            for(int i=0;i<20;i++){
+                String requst="request message "+i;
+                HttpRequestFuture future = client.send(requst, "localhost:8080/testClient");
+                FullHttpResponse f = future.get();
+                String resoponse=f.content().toString(CharsetUtil.UTF_8);
+                assert resoponse.equals(requst);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        finally {
+            client.stop();
+        }
 
     }
 

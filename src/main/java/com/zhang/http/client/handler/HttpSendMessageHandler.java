@@ -27,14 +27,12 @@ public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        System.out.println("client read");
         FullHttpResponse response=(FullHttpResponse)msg;
         future.setResopnse(response);
         future.done();
 //        System.out.println(response.getStatus());
 //        System.out.println(response.content().toString(CharsetUtil.UTF_8));
-        System.out.println("read"+ctx.channel());
-        super.channelRead(ctx, msg);
+//        super.channelRead(ctx, msg);
     }
 
     public HttpRequestFuture sendMessage(String ms){
@@ -42,9 +40,14 @@ public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
         FullHttpRequest request =
                 new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,uri,buf);
         request.headers().set(HttpHeaders.Names.CONTENT_LENGTH,request.content().readableBytes());
-        System.out.println("send"+channel);
         channel.writeAndFlush(request);
         future = new HttpRequestFuture();
         return future;
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        ctx.close();
     }
 }

@@ -16,12 +16,12 @@ public class HttpReceiveHandler extends SimpleChannelInboundHandler<FullHttpRequ
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
-        System.out.println("content"+msg.content().toString(CharsetUtil.UTF_8));
+        String s=msg.content().toString(CharsetUtil.UTF_8);
         System.out.println(msg.getUri());
         HttpResponse response = new DefaultHttpResponse(msg.getProtocolVersion(), HttpResponseStatus.OK);
         response.headers().set(HttpHeaders.Names.CONTENT_TYPE,"text/html; charset=UTF-8");
         ctx.write(response);
-        ctx.write(Unpooled.copiedBuffer("This is response", CharsetUtil.UTF_8));
+        ctx.write(Unpooled.copiedBuffer(s, CharsetUtil.UTF_8));
         ChannelFuture future = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
         future.addListener(ChannelFutureListener.CLOSE);
 

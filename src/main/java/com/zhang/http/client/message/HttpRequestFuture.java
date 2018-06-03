@@ -29,5 +29,6 @@ public class HttpRequestFuture {
 
     public void done(){
         countDownLatch.countDown();
+        System.out.println(System.currentTimeMillis());
     }
 }
