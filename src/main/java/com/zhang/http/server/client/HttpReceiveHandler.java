@@ -17,6 +17,7 @@ public class HttpReceiveHandler extends SimpleChannelInboundHandler<FullHttpRequ
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
         String s=msg.content().toString(CharsetUtil.UTF_8);
+        System.out.println(s);
         System.out.println(msg.getUri());
         HttpResponse response = new DefaultHttpResponse(msg.getProtocolVersion(), HttpResponseStatus.OK);
         response.headers().set(HttpHeaders.Names.CONTENT_TYPE,"text/html; charset=UTF-8");

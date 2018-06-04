@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.CountDownLatch;
 
 public class HttpClient {
 
@@ -68,15 +69,39 @@ public class HttpClient {
     }
 
     public static void main(String[] args) throws Exception {
-        HttpClient client = getClient("localhost", 8080);
+        final HttpClient client = getClient("localhost", 8080);
+        final CountDownLatch start = new CountDownLatch(1);
+        int threads=50;
+        final CountDownLatch end = new CountDownLatch(threads);
         try {
-            for(int i=0;i<20;i++){
-                String requst="request message "+i;
-                HttpRequestFuture future = client.send(requst, "localhost:8080/testClient");
-                FullHttpResponse f = future.get();
-                String resoponse=f.content().toString(CharsetUtil.UTF_8);
-                assert resoponse.equals(requst);
+            for(int i=0;i<threads;i++){
+                final String requst="request message "+i;
+                Thread t = new Thread(){
+                    @Override
+                    public void run() {
+                        try {
+                            start.await();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        try {
+                            HttpRequestFuture future = client.send(requst, "localhost:8080/testClient");
+                            FullHttpResponse f = future.get();
+                            if (null != f){
+                                String resoponse=f.content().toString(CharsetUtil.UTF_8);
+                                end.countDown();
+                                assert resoponse.equals(requst);
+                            }
+                        } catch (Exception e) {
+                            System.out.println("future");
+                            e.printStackTrace();
+                        }
+                    }
+                };
+                t.start();
             }
+            start.countDown();
+            end.await();
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -10,8 +10,8 @@ public class HttpRequestFuture {
 
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    public void setResopnse(FullHttpResponse resopnse){
-        this.resopnse=resopnse;
+    public void setResponse(FullHttpResponse response){
+        this.resopnse=response;
 
     }
 
@@ -20,8 +20,7 @@ public class HttpRequestFuture {
             countDownLatch.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            FullHttpResponse inresponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.REQUEST_TIMEOUT);
-            return inresponse;
+            return null;
         }
         System.out.println("request done");
         return resopnse;
@@ -29,6 +28,5 @@ public class HttpRequestFuture {
 
     public void done(){
         countDownLatch.countDown();
-        System.out.println(System.currentTimeMillis());
     }
 }
