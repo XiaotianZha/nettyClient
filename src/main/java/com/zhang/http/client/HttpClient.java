@@ -13,9 +13,12 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.FutureListener;
 
 public class HttpClient {
 
@@ -60,6 +63,7 @@ public class HttpClient {
     }
 
     public void stop() throws Exception {
+//        channelPool.close();
         group.shutdownGracefully();
     }
 
@@ -76,14 +80,11 @@ public class HttpClient {
                     public void run() {
                         try {
                             start.await();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        try {
                             FullHttpResponse f = client.send(requst, "localhost:8080/testClient");
                             if (null != f){
                                 String resoponse=f.content().toString(CharsetUtil.UTF_8);
-
+                                //remember to release
+                                ReferenceCountUtil.release(f);
                                 assert resoponse.equals(requst);
                             }
                         } catch (Exception e) {
