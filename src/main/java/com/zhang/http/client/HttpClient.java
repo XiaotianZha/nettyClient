@@ -1,10 +1,14 @@
 package com.zhang.http.client;
 
+import com.zhang.http.client.handler.HttpChannelPoolHandler;
 import com.zhang.http.client.handler.HttpSendMessageHandler;
 import com.zhang.http.client.message.HttpRequestFuture;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.pool.FixedChannelPool;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
@@ -21,6 +25,8 @@ public class HttpClient {
 
     private EventLoopGroup group = new NioEventLoopGroup();
 
+    private FixedChannelPool channelPool;
+
     public static HttpClient getClient(String host, int port) {
         return new HttpClient(port, host);
     }
@@ -28,39 +34,26 @@ public class HttpClient {
     private HttpClient(int port, String host) {
         this.port = port;
         this.host = host;
-    }
-
-    public HttpRequestFuture send(String msg, String uri) throws Exception {
-
-        final HttpSendMessageHandler handler = new HttpSendMessageHandler(uri);
         Bootstrap boot = new Bootstrap();
         boot.group(group)
                 .channel(NioSocketChannel.class)
                 .remoteAddress(new InetSocketAddress(host, port))
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new HttpClientCodec());
-                        pipeline.addLast(new HttpObjectAggregator(64 * 1024));
-                        pipeline.addLast(handler);
+        .option(ChannelOption.TCP_NODELAY,true);
+        channelPool = new FixedChannelPool(boot,new HttpChannelPoolHandler(),10);
+    }
 
-                    }
-                });
-        ChannelFuture f = boot.connect().sync();
-        HttpRequestFuture requestFuture = handler.sendMessage(msg);
-   /*     f.addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                //params future in this method is the same with f
-                System.out.println("complete " + future);
-                System.out.println(future.channel());
-            }
-        });*/
-        return requestFuture;
-           /* System.out.println("main"+future.channel());
-            ChannelFuture closse=future.channel().closeFuture();
-            System.out.println(closse);
-            //will be blocked until channel closed
-            closse.sync();*/
+    public HttpRequestFuture send(String msg, String uri) throws Exception {
+        System.out.println("send start");
+        Channel channel = channelPool.acquire().get();
+        System.out.println("get channel");
+        ByteBuf buf = Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
+        FullHttpRequest request =
+                new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,uri,buf);
+        request.headers().set(HttpHeaders.Names.CONTENT_LENGTH,request.content().readableBytes());
+        channel.writeAndFlush(request);
+        HttpRequestFuture future =channel.pipeline().get(HttpSendMessageHandler.class).getFuture();
+        channelPool.release(channel);
+        return future;
 
     }
 
@@ -71,7 +64,7 @@ public class HttpClient {
     public static void main(String[] args) throws Exception {
         final HttpClient client = getClient("localhost", 8080);
         final CountDownLatch start = new CountDownLatch(1);
-        int threads=50;
+        int threads=1;
         final CountDownLatch end = new CountDownLatch(threads);
         try {
             for(int i=0;i<threads;i++){
