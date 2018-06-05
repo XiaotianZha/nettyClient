@@ -9,19 +9,13 @@ import io.netty.util.CharsetUtil;
 
 public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
 
-//    private Channel channel;
-
-//    private final String uri;
-
     private HttpRequestFuture future = new HttpRequestFuture();
 
-//    public HttpSendMessageHandler(String uri) {
-//        this.uri = uri;
-//    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
+
 
     }
 
@@ -44,4 +38,5 @@ public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
     public HttpRequestFuture getFuture() {
         return future;
     }
+
 }

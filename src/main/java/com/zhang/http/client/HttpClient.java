@@ -39,21 +39,23 @@ public class HttpClient {
                 .channel(NioSocketChannel.class)
                 .remoteAddress(new InetSocketAddress(host, port))
         .option(ChannelOption.TCP_NODELAY,true);
-        channelPool = new FixedChannelPool(boot,new HttpChannelPoolHandler(),10);
+        channelPool = new FixedChannelPool(boot,new HttpChannelPoolHandler(),3);
     }
 
-    public HttpRequestFuture send(String msg, String uri) throws Exception {
-        System.out.println("send start");
+    public FullHttpResponse send(String msg, String uri) throws Exception {
         Channel channel = channelPool.acquire().get();
-        System.out.println("get channel");
+        ChannelPipeline pipeline=channel.pipeline();
+        HttpSendMessageHandler handler = (HttpSendMessageHandler)pipeline.get("sender");
         ByteBuf buf = Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
         FullHttpRequest request =
                 new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,uri,buf);
         request.headers().set(HttpHeaders.Names.CONTENT_LENGTH,request.content().readableBytes());
         channel.writeAndFlush(request);
-        HttpRequestFuture future =channel.pipeline().get(HttpSendMessageHandler.class).getFuture();
+
+        HttpRequestFuture future  =handler.getFuture();
+        FullHttpResponse response= future.get();
         channelPool.release(channel);
-        return future;
+        return response;
 
     }
 
@@ -64,7 +66,7 @@ public class HttpClient {
     public static void main(String[] args) throws Exception {
         final HttpClient client = getClient("localhost", 8080);
         final CountDownLatch start = new CountDownLatch(1);
-        int threads=1;
+        int threads=50;
         final CountDownLatch end = new CountDownLatch(threads);
         try {
             for(int i=0;i<threads;i++){
@@ -78,16 +80,17 @@ public class HttpClient {
                             e.printStackTrace();
                         }
                         try {
-                            HttpRequestFuture future = client.send(requst, "localhost:8080/testClient");
-                            FullHttpResponse f = future.get();
+                            FullHttpResponse f = client.send(requst, "localhost:8080/testClient");
                             if (null != f){
                                 String resoponse=f.content().toString(CharsetUtil.UTF_8);
-                                end.countDown();
+
                                 assert resoponse.equals(requst);
                             }
                         } catch (Exception e) {
                             System.out.println("future");
                             e.printStackTrace();
+                        }finally {
+                            end.countDown();
                         }
                     }
                 };

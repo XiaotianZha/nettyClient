@@ -1,6 +1,5 @@
 package com.zhang.http.server;
 
-import com.zhang.http.server.client.HttpInboundHandler;
 import com.zhang.http.server.client.HttpReceiveHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -33,7 +32,6 @@ public class HttpServer {
                                 ch.pipeline().addLast(new HttpServerCodec());
                                 ch.pipeline().addLast(new HttpObjectAggregator(64*1024));
                                 ch.pipeline().addLast(handler);
-//                                ch.pipeline().addLast(new HttpInboundHandler());
 
                             }
                         });
