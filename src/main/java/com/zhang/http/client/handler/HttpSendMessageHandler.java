@@ -22,8 +22,6 @@ public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
         FullHttpResponse response=(FullHttpResponse)msg;
         future.setResponse(response);
         future.done();
-        ReferenceCountUtil.release(future);
-        super.channelRead(ctx,msg);
     }
 
 

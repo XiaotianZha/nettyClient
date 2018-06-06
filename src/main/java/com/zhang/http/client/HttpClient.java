@@ -78,6 +78,7 @@ public class HttpClient {
                             start.await();
                             String response = client.send(requst, "localhost:8080/testClient");
                             if (null != response){
+                                System.out.println(response);
                                 assert response.equals(requst);
                             }
                         } catch (Exception e) {

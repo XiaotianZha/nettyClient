@@ -20,7 +20,7 @@ public class HttpReceiveHandler extends SimpleChannelInboundHandler<FullHttpRequ
         System.out.println(s);
         System.out.println(msg.getUri());
         HttpResponse response = new DefaultHttpResponse(msg.getProtocolVersion(), HttpResponseStatus.OK);
-        response.headers().set(HttpHeaders.Names.CONTENT_TYPE,"text/html; charset=UTF-8");
+        response.headers().set(HttpHeaders.Names.CONTENT_TYPE,"application/json;charset=UTF-8");
         ctx.write(response);
         ctx.write(Unpooled.copiedBuffer(s, CharsetUtil.UTF_8));
         ChannelFuture future = ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
