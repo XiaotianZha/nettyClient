@@ -9,16 +9,12 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.pool.FixedChannelPool;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.util.CharsetUtil;
-import io.netty.util.ReferenceCountUtil;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.FutureListener;
 
 public class HttpClient {
 
@@ -45,7 +41,7 @@ public class HttpClient {
         channelPool = new FixedChannelPool(boot,new HttpChannelPoolHandler(),3);
     }
 
-    public FullHttpResponse send(String msg, String uri) throws Exception {
+    public String send(String msg, String uri) throws Exception {
         Channel channel = channelPool.acquire().get();
         ChannelPipeline pipeline=channel.pipeline();
         HttpSendMessageHandler handler = (HttpSendMessageHandler)pipeline.get("sender");
@@ -56,7 +52,7 @@ public class HttpClient {
         channel.writeAndFlush(request);
 
         HttpRequestFuture future  =handler.getFuture();
-        FullHttpResponse response= future.get();
+        String response= future.get();
         channelPool.release(channel);
         return response;
 
@@ -70,7 +66,7 @@ public class HttpClient {
     public static void main(String[] args) throws Exception {
         final HttpClient client = getClient("localhost", 8080);
         final CountDownLatch start = new CountDownLatch(1);
-        int threads=50;
+        int threads=70;
         final CountDownLatch end = new CountDownLatch(threads);
         try {
             for(int i=0;i<threads;i++){
@@ -80,12 +76,9 @@ public class HttpClient {
                     public void run() {
                         try {
                             start.await();
-                            FullHttpResponse f = client.send(requst, "localhost:8080/testClient");
-                            if (null != f){
-                                String resoponse=f.content().toString(CharsetUtil.UTF_8);
-                                //remember to release
-                                ReferenceCountUtil.release(f);
-                                assert resoponse.equals(requst);
+                            String response = client.send(requst, "localhost:8080/testClient");
+                            if (null != response){
+                                assert response.equals(requst);
                             }
                         } catch (Exception e) {
                             System.out.println("future");

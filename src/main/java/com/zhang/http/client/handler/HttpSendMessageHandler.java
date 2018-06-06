@@ -1,11 +1,9 @@
 package com.zhang.http.client.handler;
 
 import com.zhang.http.client.message.HttpRequestFuture;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
-import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 
 public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
 
@@ -24,6 +22,8 @@ public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
         FullHttpResponse response=(FullHttpResponse)msg;
         future.setResponse(response);
         future.done();
+        ReferenceCountUtil.release(future);
+        super.channelRead(ctx,msg);
     }
 
 

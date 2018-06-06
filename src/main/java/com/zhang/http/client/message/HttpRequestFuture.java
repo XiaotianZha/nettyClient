@@ -1,6 +1,7 @@
 package com.zhang.http.client.message;
 
 import io.netty.handler.codec.http.*;
+import io.netty.util.CharsetUtil;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -15,7 +16,7 @@ public class HttpRequestFuture {
 
     }
 
-    public FullHttpResponse get() {
+    public String get() {
         try {
             countDownLatch.await();
         } catch (InterruptedException e) {
@@ -23,7 +24,11 @@ public class HttpRequestFuture {
             return null;
         }
         System.out.println("request done");
-        return resopnse;
+        String contentType =resopnse.headers().get(HttpHeaders.Names.CONTENT_TYPE);
+        if (contentType.equalsIgnoreCase("application/json;charset-UTF-8")){
+            return resopnse.content().toString(CharsetUtil.UTF_8);
+        }
+        return null;
     }
 
     public void done(){
