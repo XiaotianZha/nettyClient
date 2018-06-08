@@ -22,7 +22,6 @@ public class HttpSendMessageHandler extends ChannelInboundHandlerAdapter{
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         this.channel=ctx.channel();
-        System.out.println(channel);
         super.channelActive(ctx);
 
     }
